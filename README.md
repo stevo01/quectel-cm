@@ -1,6 +1,6 @@
 # quectel-cm
 
-# build tool
+## build tool
 ```
 ./autogen.sh
 ./configure.sh --host=arm
