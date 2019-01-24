@@ -538,10 +538,9 @@ int requestSetEthMode(PROFILE_T *profile) {
     PQMUX_MSG pMUXMsg;
     int err;
     PQMIWDS_ADMIN_SET_DATA_FORMAT_TLV linkProto;
-    UCHAR autoconnect_setting = 0;
 
     if (profile->IsDualIPSupported) {
-        UCHAR IpPreference;
+        UCHAR IpPreference, autoconnect_setting;
 
         IpPreference = IpFamilyV4;
         pRequest = ComposeQMUXMsg(QMUX_TYPE_WDS, QMIWDS_SET_CLIENT_IP_FAMILY_PREF_REQ, WdsSetClientIPFamilyPref, (void *)&IpPreference);
@@ -552,11 +551,12 @@ int requestSetEthMode(PROFILE_T *profile) {
         pRequest = ComposeQMUXMsg(QMUX_TYPE_WDS_IPV6, QMIWDS_SET_CLIENT_IP_FAMILY_PREF_REQ, WdsSetClientIPFamilyPref, (void *)&IpPreference);
         QmiThreadSendQMI(pRequest, &pResponse);
         if (pResponse) free(pResponse);
+
+        autoconnect_setting = 0;
+        pRequest = ComposeQMUXMsg(QMUX_TYPE_WDS, QMIWDS_SET_AUTO_CONNECT_REQ , WdsSetAutoConnect, (void *)&autoconnect_setting);
+        QmiThreadSendQMI(pRequest, &pResponse);
+        if (pResponse) free(pResponse);
     }
-    
-    pRequest = ComposeQMUXMsg(QMUX_TYPE_WDS, QMIWDS_SET_AUTO_CONNECT_REQ , WdsSetAutoConnect, (void *)&autoconnect_setting);
-    QmiThreadSendQMI(pRequest, &pResponse);
-    if (pResponse) free(pResponse);
 
     pRequest = ComposeQMUXMsg(QMUX_TYPE_WDS_ADMIN, QMIWDS_ADMIN_SET_DATA_FORMAT_REQ, WdaSetDataFormat, NULL);
     err = QmiThreadSendQMI(pRequest, &pResponse);
@@ -1985,7 +1985,7 @@ int requestBaseBandVersion(const char **pp_reversion) {
 #ifdef CONFIG_RESET_RADIO
 static USHORT DmsSetOperatingModeReq(PQMUX_MSG pMUXMsg, void *arg) {
     pMUXMsg->SetOperatingModeReq.TLVType = 0x01;
-    pMUXMsg->SetOperatingModeReq.TLVLength = cpu_to_le16(1);
+    pMUXMsg->SetOperatingModeReq.TLVLength = 1;
     pMUXMsg->SetOperatingModeReq.OperatingMode = *((UCHAR *)arg);
 
     return sizeof(QMIDMS_SET_OPERATING_MODE_REQ_MSG);

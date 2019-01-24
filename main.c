@@ -328,71 +328,22 @@ static int usage(const char *progname) {
      dbg_time("Example 3: %s -s 3gnet carl 1234 0 -p 1234 -f gobinet_log.txt", progname);
      return 0;
 }
-static int charsplit(const char *src,char* desc,int n,const char* splitStr)
-{
-	char* p;
-	char*p1;
-	int len;
-	
-	len=strlen(splitStr);
-	p=strstr(src,splitStr);
-	if(p==NULL)
-		return -1;
-	p1=strstr(p,"\n");
-	if(p1==NULL)
-		return -1;
-	memset(desc,0,n);
-	memcpy(desc,p+len,p1-p-len);
-	
-	return 0;
-}
 
-static int get_dev_major_minor(char* path, int *major, int *minor)
-{
-	int fd = -1;
-	char desc[128] = {0};
-	char devmajor[64],devminor[64];
-	int n = 0;
-	if(access(path, R_OK | W_OK))
-	{
-		return 1;
-	}
-	if((fd = open(path, O_RDWR)) < 0)
-	{
-		return 1;
-	}
-	n = read(fd , desc, sizeof(desc));
-	if(n == sizeof(desc))
-	{
-		dbg_time("may be overflow");
-	}
-	close(fd);
-	if(charsplit(desc,devmajor,64,"MAJOR=")==-1 ||
-		charsplit(desc,devminor,64,"MINOR=")==-1 )
-	{
-		return 2;
-	}
-	*major = atoi(devmajor);
-	*minor = atoi(devminor);
-	return 0;
-}
 static int qmidevice_detect(char **pp_qmichannel, char **pp_usbnet_adapter) {
     struct dirent* ent = NULL;
     DIR *pDir;
 
     char dir[255] = "/sys/bus/usb/devices";
-    int major = 0, minor = 0;
     pDir = opendir(dir);
     if (pDir)  {
         while ((ent = readdir(pDir)) != NULL)  {
             struct dirent* subent = NULL;
             DIR *psubDir;
             char subdir[255];
-            char subdir2[255 * 2];
 
             char idVendor[4+1] = {0};
             char idProduct[4+1] = {0};
-            int fd = 0;
+            int fd;
 
             char netcard[32] = "\0";
             char qmifile[32] = "\0";
@@ -468,26 +419,6 @@ static int qmidevice_detect(char **pp_qmichannel, char **pp_usbnet_adapter) {
                 dbg_time("Find %s/%s", subdir, subent->d_name);
                 dbg_time("Find qmichannel = /dev/%s", subent->d_name);
                 snprintf(qmifile, sizeof(qmifile), "/dev/%s", subent->d_name);
-
-                //get major minor
-                snprintf(subdir2, sizeof(subdir), "%s/%s/uevent",subdir, subent->d_name);
-                if(!get_dev_major_minor(subdir2, &major, &minor))
-                {
-                	//dbg_time("%s major = %d, minor = %d\n",qmifile, major, minor);
-                }else
-                {
-                	dbg_time("get %s major and minor failed\n",qmifile);
-                }
-                //get major minor
-                
-                if((fd = open(qmifile, R_OK)) < 0)
-                {
-                	dbg_time("%s open failed", qmifile);
-                	dbg_time("please mknod %s c %d %d", qmifile, major, minor);
-                }else
-                {
-                	close(fd);
-                }
                 break;
             }
 
@@ -659,7 +590,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    dbg_time("WCDMA&LTE_QConnectManager_Linux&Android_V1.1.34");
+    dbg_time("WCDMA&LTE_QConnectManager_Linux&Android_V1.1.33");
     dbg_time("%s profile[%d] = %s/%s/%s/%d, pincode = %s", argv[0], profile.pdp, profile.apn, profile.user, profile.password, profile.auth, profile.pincode);
 
     signal(SIGUSR1, ql_sigaction);
